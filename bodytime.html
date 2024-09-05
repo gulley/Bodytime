@@ -41,10 +41,14 @@
             bottom: 0;
             left: 60px;
         }
+
+
         .clock-container {
             position: absolute;
-            width: 60px;
+            width: auto;
+            height: auto;
         }
+
         .clock {
             width: 60px;
             height: 60px;
@@ -53,17 +57,39 @@
             position: relative;
             background-color: white;
         }
+
+        #transitTime {
+            z-index: 10; /* Ensure the transit clock appears above other clocks when overlapping */
+        }
+
+        #departureTime, #arrivalTime {
+            z-index: 5; /* Lower z-index for departure and arrival clocks */
+        }
+
+        .clock-svg-overlay {
+            position: absolute;
+            z-index: 11; /* Ensure the SVG overlay appears above all clocks */
+            top: -100%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
         .clock-face {
             width: 100%;
             height: 100%;
             position: relative;
+            z-index: 2;
         }
+
         .hand {
             position: absolute;
             bottom: 50%;
             left: 50%;
             transform-origin: 50% 100%;
             background-color: black;
+            z-index: 3;
         }
         .hour-hand {
             width: 2px;
@@ -152,6 +178,9 @@
         </div>
         <div id="transitLabel" class="clock-label">In Transit</div>
         <div id="transitTime" class="clock-container">
+            <svg class="clock-svg-overlay" viewBox="0 0 564 227" xmlns="http://www.w3.org/2000/svg">
+                <polyline fill="black" points="330,196 306,192 284,186 255,186 225,186 196,185 168,183 143,179 118,175 95,168 71,162 50,154 29,144 25,128 32,114 30,96 23,73 15,51 11,30 34,28 50,43 61,61 74,78 89,93 106,105 131,109 159,107 188,106 216,105 245,104 275,104 305,104 334,104 364,104 394,104 423,105 450,107 477,110 501,115 523,123 540,135 552,153 541,169 517,175 491,179 464,181 436,183 408,184 378,184 351,187" stroke="none" />
+            </svg>
             <div class="clock">
                 <div class="clock-face">
                     <div class="hand hour-hand"></div>
@@ -160,6 +189,7 @@
             </div>
             <div id="transitDigitalTime" class="digital-time"></div>
         </div>
+        
         <div id="arrivalLabel" class="clock-label"></div>
         <div id="arrivalTime" class="clock-container">
             <div class="clock">
@@ -179,6 +209,8 @@
     </div>
 
     <div id="errorMessage"></div>
+    <p></p>
+
     <div id="debugInfo"></div>
 
     <script>
@@ -219,7 +251,7 @@
                 const departurePlace = getElementValue('departurePlaceInput', ' ');
                 const arrivalPlace = getElementValue('arrivalPlaceInput', ' ');
 
-                log(`Inputs: departureTime=${departureTime}, arrivalTime=${arrivalTime}, departureOffset=${departureOffset}, arrivalOffset=${arrivalOffset}, percentTraveled=${percentTraveled}`);
+                // log(`Inputs: departureTime=${departureTime}, arrivalTime=${arrivalTime}, departureOffset=${departureOffset}, arrivalOffset=${arrivalOffset}, percentTraveled=${percentTraveled}`);
 
                 if (!departureTime || !arrivalTime || isNaN(departureOffset) || isNaN(arrivalOffset)) {
                     throw new Error('Please fill in all required fields with valid values.');
@@ -233,22 +265,44 @@
 
                 updateElementText('departureLabel', departurePlace);
                 updateElementText('arrivalLabel', arrivalPlace);
-
+                        
                 // Update transit clock position
                 const transitClock = document.getElementById('transitTime');
+                const departureClockElement = document.getElementById('departureTime');
+                const arrivalClockElement = document.getElementById('arrivalTime');
                 const arcElement = document.querySelector('.arc');
-                if (!arcElement) throw new Error('Arc element not found');
-                const arcWidth = arcElement.offsetWidth;
-                const clockWidth = transitClock ? transitClock.offsetWidth : 0;
-                const leftPosition = (percentTraveled / 100) * arcWidth + 60 - (clockWidth / 2);
-                const bottomPosition = Math.sin((percentTraveled / 100) * Math.PI) * 150;
-                
-                if (transitClock) {
-                    transitClock.style.left = `${leftPosition}px`;
-                    transitClock.style.bottom = `${bottomPosition}px`;
+
+                if (!arcElement || !transitClock || !departureClockElement || !arrivalClockElement) {
+                    throw new Error('Required elements not found');
                 }
 
-                log('Display updated successfully');
+                const arcWidth = arcElement.offsetWidth;
+                const containerLeft = arcElement.offsetLeft;
+
+                // Calculate the bottom position to follow the arc
+                const bottomPosition = Math.sin((percentTraveled / 100) * Math.PI) * 150;
+
+                const departureRect = departureClockElement.getBoundingClientRect();
+                const arrivalRect = arrivalClockElement.getBoundingClientRect();
+                const arcRect = arcElement.getBoundingClientRect();
+
+                const departureLeft = departureRect.left - arcRect.left;
+                const arrivalLeft = arrivalRect.left - arcRect.left;
+
+                // FIXME: The 92 in the equation below is a hack that I do not understand
+                const fudgeFactor = 92;
+                const leftPosition = departureLeft + (percentTraveled / 100) * (arrivalLeft - departureLeft) + fudgeFactor;
+
+                transitClock.style.left = `${leftPosition}px`;
+                transitClock.style.bottom = `${bottomPosition}px`;
+
+                // log('Arc left:', arcElement.getBoundingClientRect().left);
+                // log('Arc offsetLeft:', arcElement.offsetLeft);
+                // log('Arc padding:', window.getComputedStyle(arcElement).padding);
+                // log('Arc margin:', window.getComputedStyle(arcElement).margin); 
+                // log(`arcLeft=${arcLeft}, minLeft=${minLeft}, leftPosition=${leftPosition}`);
+                // log('Display updated successfully');
+
             } catch (error) {
                 showError(`Error: ${error.message}`);
             }

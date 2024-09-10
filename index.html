@@ -120,19 +120,34 @@
         #arrivalLabel { right: 30px; transform: translateX(50%); }
         #transitTime { left: 50%; bottom: 100%; transform: translateX(-50%); }
         #transitLabel { left: 50%; }
+
         .slider-container {
             position: relative;
             margin-top: 20px;
+            margin-bottom: 30px; /* Add some space below the slider container */
         }
+
         #slider {
             width: 100%;
         }
+
         .slider-label {
             position: absolute;
             top: 20px;
         }
+
         .slider-label.begin { left: 0; }
         .slider-label.end { right: 0; }
+
+        .slider-instruction {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 40px; /* Position it below the slider */
+            font-size: 14px; /* Adjust as needed */
+            color: #666; /* Adjust color as needed */
+        }
+
     </style>
 </head>
 <body>
@@ -206,6 +221,7 @@
         <input type="range" id="slider" min="0" max="100" value="0">
         <div class="slider-label begin">Begin</div>
         <div class="slider-label end">End</div>
+        <div class="slider-instruction">Move this slider to fly the airplane</div>
     </div>
 
     <div id="errorMessage"></div>

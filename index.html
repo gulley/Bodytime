@@ -160,7 +160,7 @@
             <label for="departureTimeInput">Time</label>
             <input type="time" id="departureTimeInput" value="09:15" required>
             <label for="departureDateInput">Date (optional)</label>
-            <input type="date" id="departureDateInput" value="2024-11-18">
+            <input type="date" id="departureDateInput">
             <label for="departurePlaceInput">Place (optional)</label>
             <input type="text" id="departurePlaceInput" value="Amsterdam (AMS)" placeholder="Place">
             <label for="departureOffsetInput">Time Zone Offset from UTC</label>
@@ -171,7 +171,7 @@
             <label for="arrivalTimeInput">Time</label>
             <input type="time" id="arrivalTimeInput" value="11:40" required>
             <label for="arrivalDateInput">Date (optional)</label>
-            <input type="date" id="arrivalDateInput" value="2024-11-18">
+            <input type="date" id="arrivalDateInput">
             <label for="arrivalPlaceInput">Place (optional)</label>
             <input type="text" id="arrivalPlaceInput" value="NY (JFK)" placeholder="Place">
             <label for="arrivalOffsetInput">Time Zone Offset from UTC</label>
@@ -225,19 +225,8 @@
     </div>
 
     <div id="errorMessage"></div>
-    <p></p>
-
-    <!-- <div id="debugInfo"></div> -->
 
     <script>
-        function log(message) {
-            console.log(message);
-            const debugInfo = document.getElementById('debugInfo');
-            if (debugInfo) {
-                debugInfo.textContent += message + '\n';
-            }
-        }
-
         function showError(message) {
             console.error(message);
             const errorElement = document.getElementById('errorMessage');
@@ -252,11 +241,8 @@
         }
 
         function updateDisplay() {
-            log('Updating display...');
             const errorMessageElement = document.getElementById('errorMessage');
-            const debugInfoElement = document.getElementById('debugInfo');
             if (errorMessageElement) errorMessageElement.textContent = '';
-            if (debugInfoElement) debugInfoElement.textContent = '';
 
             try {
                 const departureTime = getElementValue('departureTimeInput');
@@ -266,8 +252,6 @@
                 const percentTraveled = parseInt(getElementValue('slider', '0'));
                 const departurePlace = getElementValue('departurePlaceInput', ' ');
                 const arrivalPlace = getElementValue('arrivalPlaceInput', ' ');
-
-                // log(`Inputs: departureTime=${departureTime}, arrivalTime=${arrivalTime}, departureOffset=${departureOffset}, arrivalOffset=${arrivalOffset}, percentTraveled=${percentTraveled}`);
 
                 if (!departureTime || !arrivalTime || isNaN(departureOffset) || isNaN(arrivalOffset)) {
                     throw new Error('Please fill in all required fields with valid values.');
@@ -305,19 +289,11 @@
                 const departureLeft = departureRect.left - arcRect.left;
                 const arrivalLeft = arrivalRect.left - arcRect.left;
 
-                // FIXME: The 92 in the equation below is a hack that I do not understand
-                const fudgeFactor = 92;
-                const leftPosition = departureLeft + (percentTraveled / 100) * (arrivalLeft - departureLeft) + fudgeFactor;
+                const clockWidth = transitClock.offsetWidth;
+                const leftPosition = departureLeft + (percentTraveled / 100) * (arrivalLeft - departureLeft) + arcElement.offsetLeft + clockWidth / 2;
 
                 transitClock.style.left = `${leftPosition}px`;
                 transitClock.style.bottom = `${bottomPosition}px`;
-
-                // log('Arc left:', arcElement.getBoundingClientRect().left);
-                // log('Arc offsetLeft:', arcElement.offsetLeft);
-                // log('Arc padding:', window.getComputedStyle(arcElement).padding);
-                // log('Arc margin:', window.getComputedStyle(arcElement).margin); 
-                // log(`arcLeft=${arcLeft}, minLeft=${minLeft}, leftPosition=${leftPosition}`);
-                // log('Display updated successfully');
 
             } catch (error) {
                 showError(`Error: ${error.message}`);
@@ -328,8 +304,6 @@
             const depMinutes = timeToMinutes(departureTime);
             const arrMinutes = timeToMinutes(arrivalTime);
             const timeZoneDiff = (arrivalOffset - departureOffset) * 60;
-            log(`timeZoneDiff=${timeZoneDiff}`);
-            
             let tripDuration = arrMinutes - depMinutes - timeZoneDiff;
             if (tripDuration < 0) tripDuration += 24 * 60;
             
@@ -338,19 +312,16 @@
             const arrivalClockMinutes = departureClockMinutes + timeZoneDiff;
             
             return {
-                inTransitTime: minutesToTime(inTransitMinutes % (24 * 60)),
-                departureClock: minutesToTime(departureClockMinutes % (24 * 60)),
-                arrivalClock: minutesToTime(arrivalClockMinutes % (24 * 60))
+                inTransitTime: minutesToTime(inTransitMinutes),
+                departureClock: minutesToTime(departureClockMinutes),
+                arrivalClock: minutesToTime(arrivalClockMinutes)
             };
         }
 
         function updateClock(clockId, time) {
             const [hours, minutes] = time.split(':').map(Number);
             const clockContainer = document.getElementById(clockId);
-            if (!clockContainer) {
-                log(`Clock container element not found: ${clockId}`);
-                return;
-            }
+            if (!clockContainer) return;
             const clock = clockContainer.querySelector('.clock');
             const hourHand = clock.querySelector('.hour-hand');
             const minuteHand = clock.querySelector('.minute-hand');
@@ -383,20 +354,20 @@
         }
 
         function minutesToTime(minutes) {
-            const hours = Math.floor(minutes / 60);
-            const mins = Math.floor(minutes % 60);
+            const wrapped = ((minutes % (24 * 60)) + 24 * 60) % (24 * 60);
+            const hours = Math.floor(wrapped / 60);
+            const mins = Math.floor(wrapped % 60);
             return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
         }
 
         function formatTime(time) {
-            const [hours, minutes] = time.split(':');
+            const [hours, minutes] = time.split(':').map(Number);
             const ampm = hours >= 12 ? 'p' : 'a';
             const formattedHours = hours % 12 || 12;
-            return `${formattedHours}:${minutes}${ampm}`;
+            return `${formattedHours}:${String(minutes).padStart(2, '0')}${ampm}`;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            log('DOM content loaded');
             const inputs = document.querySelectorAll('input');
             inputs.forEach(input => {
                 input.addEventListener('input', updateDisplay);
@@ -411,12 +382,6 @@
             }
             if (arrivalDateInput && !arrivalDateInput.value) {
                 arrivalDateInput.value = today;
-            }
-
-            // Add event listener to the slider
-            const slider = document.getElementById('slider');
-            if (slider) {
-                slider.addEventListener('input', updateDisplay);
             }
 
             updateDisplay();

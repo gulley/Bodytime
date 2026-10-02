@@ -11,26 +11,33 @@
             margin: 0 auto;
             padding: 20px;
         }
+
+        /* Inputs */
         .container {
             display: flex;
             justify-content: space-between;
         }
-        .section {
-            width: 45%;
-        }
+        .section { width: 45%; }
         label {
             display: block;
             margin-top: 10px;
         }
         input {
+            box-sizing: border-box;
             width: 100%;
             margin-bottom: 10px;
         }
+        .airport-code { text-transform: uppercase; }
+        .hint {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Arc and clocks */
         .arc-container {
             height: 200px;
             position: relative;
-            margin-top: 20px;
-            margin-bottom: 70px;
+            margin: 20px 0 70px;
         }
         .arc {
             position: absolute;
@@ -41,14 +48,7 @@
             bottom: 0;
             left: 60px;
         }
-
-
-        .clock-container {
-            position: absolute;
-            width: auto;
-            height: auto;
-        }
-
+        .clock-container { position: absolute; }
         .clock {
             width: 60px;
             height: 60px;
@@ -57,39 +57,12 @@
             position: relative;
             background-color: white;
         }
-
-        #transitTime {
-            z-index: 10; /* Ensure the transit clock appears above other clocks when overlapping */
-        }
-
-        #departureTime, #arrivalTime {
-            z-index: 5; /* Lower z-index for departure and arrival clocks */
-        }
-
-        .clock-svg-overlay {
-            position: absolute;
-            z-index: 11; /* Ensure the SVG overlay appears above all clocks */
-            top: -100%;
-            left: 0%;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .clock-face {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            z-index: 2;
-        }
-
         .hand {
             position: absolute;
             bottom: 50%;
             left: 50%;
             transform-origin: 50% 100%;
             background-color: black;
-            z-index: 3;
         }
         .hour-hand {
             width: 2px;
@@ -114,40 +87,48 @@
             text-align: center;
             top: 70px;
         }
-        #departureTime { left: 0; bottom: 0; }
+        .jet {
+            position: absolute;
+            z-index: 1;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #departureTime { left: 0; bottom: 0; z-index: 5; }
         #departureLabel { left: 30px; }
-        #arrivalTime { right: 0; bottom: 0; }
+        #arrivalTime { right: 0; bottom: 0; z-index: 5; }
         #arrivalLabel { right: 30px; transform: translateX(50%); }
-        #transitTime { left: 50%; bottom: 100%; transform: translateX(-50%); }
+        #transitTime { left: 50%; bottom: 100%; transform: translateX(-50%); z-index: 10; }
         #transitLabel { left: 50%; }
 
+        /* Slider */
         .slider-container {
             position: relative;
-            margin-top: 20px;
-            margin-bottom: 30px; /* Add some space below the slider container */
+            margin: 20px 0 30px;
         }
-
-        #slider {
-            width: 100%;
-        }
-
         .slider-label {
             position: absolute;
             top: 20px;
         }
-
         .slider-label.begin { left: 0; }
         .slider-label.end { right: 0; }
-
         .slider-instruction {
             position: absolute;
             width: 100%;
             text-align: center;
-            top: 40px; /* Position it below the slider */
-            font-size: 14px; /* Adjust as needed */
-            color: #666; /* Adjust color as needed */
+            top: 40px;
+            font-size: 14px;
+            color: #666;
         }
 
+        #errorMessage {
+            margin-top: 60px;
+            color: #b00020;
+        }
+        #errorMessage:empty { display: none; }
     </style>
 </head>
 <body>
@@ -161,10 +142,12 @@
             <input type="time" id="departureTimeInput" value="09:15" required>
             <label for="departureDateInput">Date (optional)</label>
             <input type="date" id="departureDateInput">
+            <label for="departureAirportInput">Airport code (optional) <span id="departureAirportHint" class="hint"></span></label>
+            <input type="text" id="departureAirportInput" class="airport-code" value="AMS" maxlength="3" placeholder="e.g. AMS">
             <label for="departurePlaceInput">Place (optional)</label>
-            <input type="text" id="departurePlaceInput" value="Amsterdam (AMS)" placeholder="Place">
+            <input type="text" id="departurePlaceInput" placeholder="Place">
             <label for="departureOffsetInput">Time Zone Offset from UTC</label>
-            <input type="number" id="departureOffsetInput" value="1" placeholder="Time Zone Offset from UTC" required>
+            <input type="number" id="departureOffsetInput" value="1" step="0.25" required>
         </div>
         <div class="section">
             <h2>Arrival</h2>
@@ -172,48 +155,46 @@
             <input type="time" id="arrivalTimeInput" value="11:40" required>
             <label for="arrivalDateInput">Date (optional)</label>
             <input type="date" id="arrivalDateInput">
+            <label for="arrivalAirportInput">Airport code (optional) <span id="arrivalAirportHint" class="hint"></span></label>
+            <input type="text" id="arrivalAirportInput" class="airport-code" value="JFK" maxlength="3" placeholder="e.g. JFK">
             <label for="arrivalPlaceInput">Place (optional)</label>
-            <input type="text" id="arrivalPlaceInput" value="NY (JFK)" placeholder="Place">
+            <input type="text" id="arrivalPlaceInput" placeholder="Place">
             <label for="arrivalOffsetInput">Time Zone Offset from UTC</label>
-            <input type="number" id="arrivalOffsetInput" value="-5" placeholder="Time Zone Offset from UTC" required>
+            <input type="number" id="arrivalOffsetInput" value="-5" step="0.25" required>
         </div>
     </div>
 
     <div class="arc-container">
         <div class="arc"></div>
+
         <div id="departureLabel" class="clock-label"></div>
         <div id="departureTime" class="clock-container">
             <div class="clock">
-                <div class="clock-face">
-                    <div class="hand hour-hand"></div>
-                    <div class="hand minute-hand"></div>
-                </div>
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
             </div>
-            <div id="departureDigitalTime" class="digital-time"></div>
+            <div class="digital-time"></div>
         </div>
+
         <div id="transitLabel" class="clock-label">In Transit</div>
         <div id="transitTime" class="clock-container">
-            <svg class="clock-svg-overlay" viewBox="0 0 564 227" xmlns="http://www.w3.org/2000/svg">
+            <svg class="jet" viewBox="0 0 564 227" xmlns="http://www.w3.org/2000/svg">
                 <polyline fill="black" points="330,196 306,192 284,186 255,186 225,186 196,185 168,183 143,179 118,175 95,168 71,162 50,154 29,144 25,128 32,114 30,96 23,73 15,51 11,30 34,28 50,43 61,61 74,78 89,93 106,105 131,109 159,107 188,106 216,105 245,104 275,104 305,104 334,104 364,104 394,104 423,105 450,107 477,110 501,115 523,123 540,135 552,153 541,169 517,175 491,179 464,181 436,183 408,184 378,184 351,187" stroke="none" />
             </svg>
             <div class="clock">
-                <div class="clock-face">
-                    <div class="hand hour-hand"></div>
-                    <div class="hand minute-hand"></div>
-                </div>
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
             </div>
-            <div id="transitDigitalTime" class="digital-time"></div>
+            <div class="digital-time"></div>
         </div>
-        
+
         <div id="arrivalLabel" class="clock-label"></div>
         <div id="arrivalTime" class="clock-container">
             <div class="clock">
-                <div class="clock-face">
-                    <div class="hand hour-hand"></div>
-                    <div class="hand minute-hand"></div>
-                </div>
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
             </div>
-            <div id="arrivalDigitalTime" class="digital-time"></div>
+            <div class="digital-time"></div>
         </div>
     </div>
 
@@ -226,126 +207,77 @@
 
     <div id="errorMessage"></div>
 
+    <script src="airports.js"></script>
     <script>
-        function showError(message) {
-            console.error(message);
-            const errorElement = document.getElementById('errorMessage');
-            if (errorElement) {
-                errorElement.textContent = message;
-            }
-        }
-
-        function getElementValue(id, defaultValue = '') {
-            const element = document.getElementById(id);
-            return element ? element.value : defaultValue;
-        }
+        const MINUTES_PER_DAY = 24 * 60;
+        const $ = id => document.getElementById(id);
 
         function updateDisplay() {
-            const errorMessageElement = document.getElementById('errorMessage');
-            if (errorMessageElement) errorMessageElement.textContent = '';
+            const depTime = $('departureTimeInput').value;
+            const arrTime = $('arrivalTimeInput').value;
+            const depOffset = parseFloat($('departureOffsetInput').value);
+            const arrOffset = parseFloat($('arrivalOffsetInput').value);
+            const fraction = $('slider').value / 100;
 
-            try {
-                const departureTime = getElementValue('departureTimeInput');
-                const arrivalTime = getElementValue('arrivalTimeInput');
-                const departureOffset = parseFloat(getElementValue('departureOffsetInput', '0'));
-                const arrivalOffset = parseFloat(getElementValue('arrivalOffsetInput', '0'));
-                const percentTraveled = parseInt(getElementValue('slider', '0'));
-                const departurePlace = getElementValue('departurePlaceInput', ' ');
-                const arrivalPlace = getElementValue('arrivalPlaceInput', ' ');
+            $('departureLabel').textContent = $('departurePlaceInput').value;
+            $('arrivalLabel').textContent = $('arrivalPlaceInput').value;
 
-                if (!departureTime || !arrivalTime || isNaN(departureOffset) || isNaN(arrivalOffset)) {
-                    throw new Error('Please fill in all required fields with valid values.');
+            if (!depTime || !arrTime || isNaN(depOffset) || isNaN(arrOffset)) {
+                $('errorMessage').textContent = 'Please fill in all required fields with valid values.';
+                return;
+            }
+
+            const depMinutes = timeToMinutes(depTime);
+            const arrMinutes = timeToMinutes(arrTime);
+            const timeZoneDiff = (arrOffset - depOffset) * 60;
+            const days = daysBetween($('departureDateInput').value, $('arrivalDateInput').value);
+
+            let tripDuration = days * MINUTES_PER_DAY + arrMinutes - depMinutes - timeZoneDiff;
+            if (tripDuration < 0) {
+                if (days !== 0) {
+                    $('errorMessage').textContent = 'Arrival is before departure. Check the dates.';
+                    return;
                 }
-
-                const { inTransitTime, departureClock, arrivalClock } = calculateTimes(departureTime, arrivalTime, departureOffset, arrivalOffset, percentTraveled);
-                
-                updateClock('departureTime', departureClock);
-                updateClock('transitTime', inTransitTime);
-                updateClock('arrivalTime', arrivalClock);
-
-                updateElementText('departureLabel', departurePlace);
-                updateElementText('arrivalLabel', arrivalPlace);
-                        
-                // Update transit clock position
-                const transitClock = document.getElementById('transitTime');
-                const departureClockElement = document.getElementById('departureTime');
-                const arrivalClockElement = document.getElementById('arrivalTime');
-                const arcElement = document.querySelector('.arc');
-
-                if (!arcElement || !transitClock || !departureClockElement || !arrivalClockElement) {
-                    throw new Error('Required elements not found');
-                }
-
-                const arcWidth = arcElement.offsetWidth;
-                const containerLeft = arcElement.offsetLeft;
-
-                // Calculate the bottom position to follow the arc
-                const bottomPosition = Math.sin((percentTraveled / 100) * Math.PI) * 150;
-
-                const departureRect = departureClockElement.getBoundingClientRect();
-                const arrivalRect = arrivalClockElement.getBoundingClientRect();
-                const arcRect = arcElement.getBoundingClientRect();
-
-                const departureLeft = departureRect.left - arcRect.left;
-                const arrivalLeft = arrivalRect.left - arcRect.left;
-
-                const clockWidth = transitClock.offsetWidth;
-                const leftPosition = departureLeft + (percentTraveled / 100) * (arrivalLeft - departureLeft) + arcElement.offsetLeft + clockWidth / 2;
-
-                transitClock.style.left = `${leftPosition}px`;
-                transitClock.style.bottom = `${bottomPosition}px`;
-
-            } catch (error) {
-                showError(`Error: ${error.message}`);
+                // Dates left on the same day: assume an overnight flight.
+                tripDuration += MINUTES_PER_DAY;
             }
+            $('errorMessage').textContent = '';
+
+            // The departure and arrival clocks show local time at each end of the trip.
+            // The transit clock shifts gradually from departure time zone to arrival time zone.
+            const departureClock = depMinutes + fraction * tripDuration;
+            setClock('departureTime', departureClock);
+            setClock('transitTime', departureClock + fraction * timeZoneDiff);
+            setClock('arrivalTime', departureClock + timeZoneDiff);
+
+            positionTransitClock(fraction);
         }
 
-        function calculateTimes(departureTime, arrivalTime, departureOffset, arrivalOffset, percentTraveled) {
-            const depMinutes = timeToMinutes(departureTime);
-            const arrMinutes = timeToMinutes(arrivalTime);
-            const timeZoneDiff = (arrivalOffset - departureOffset) * 60;
-            let tripDuration = arrMinutes - depMinutes - timeZoneDiff;
-            if (tripDuration < 0) tripDuration += 24 * 60;
-            
-            const departureClockMinutes = depMinutes + (percentTraveled / 100) * tripDuration;
-            const inTransitMinutes = departureClockMinutes + (percentTraveled / 100) * timeZoneDiff;
-            const arrivalClockMinutes = departureClockMinutes + timeZoneDiff;
-            
-            return {
-                inTransitTime: minutesToTime(inTransitMinutes),
-                departureClock: minutesToTime(departureClockMinutes),
-                arrivalClock: minutesToTime(arrivalClockMinutes)
-            };
+        // Move the transit clock along the arc between the departure and arrival clocks.
+        function positionTransitClock(fraction) {
+            const dep = $('departureTime');
+            const arr = $('arrivalTime');
+            const start = dep.offsetLeft + dep.offsetWidth / 2;
+            const end = arr.offsetLeft + arr.offsetWidth / 2;
+            const arcHeight = document.querySelector('.arc').offsetHeight;
+
+            const transit = $('transitTime');
+            transit.style.left = `${start + fraction * (end - start)}px`;
+            transit.style.bottom = `${Math.sin(fraction * Math.PI) * arcHeight}px`;
         }
 
-        function updateClock(clockId, time) {
-            const [hours, minutes] = time.split(':').map(Number);
-            const clockContainer = document.getElementById(clockId);
-            if (!clockContainer) return;
-            const clock = clockContainer.querySelector('.clock');
-            const hourHand = clock.querySelector('.hour-hand');
-            const minuteHand = clock.querySelector('.minute-hand');
+        function setClock(id, totalMinutes) {
+            const minutesOfDay = ((Math.floor(totalMinutes) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+            const hours = Math.floor(minutesOfDay / 60);
+            const minutes = minutesOfDay % 60;
 
-            if (hourHand && minuteHand) {
-                const hourDeg = (hours % 12 + minutes / 60) * 30;
-                const minuteDeg = minutes * 6;
+            const clock = $(id);
+            clock.querySelector('.hour-hand').style.transform = `rotate(${(hours % 12 + minutes / 60) * 30}deg)`;
+            clock.querySelector('.minute-hand').style.transform = `rotate(${minutes * 6}deg)`;
 
-                hourHand.style.transform = `rotate(${hourDeg}deg)`;
-                minuteHand.style.transform = `rotate(${minuteDeg}deg)`;
-            }
-
-            // Update digital time display
-            const digitalTimeElement = clockContainer.querySelector('.digital-time');
-            if (digitalTimeElement) {
-                digitalTimeElement.textContent = formatTime(time);
-            }
-        }
-
-        function updateElementText(id, text) {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = text;
-            }
+            const ampm = hours >= 12 ? 'p' : 'a';
+            clock.querySelector('.digital-time').textContent =
+                `${hours % 12 || 12}:${String(minutes).padStart(2, '0')}${ampm}`;
         }
 
         function timeToMinutes(time) {
@@ -353,38 +285,67 @@
             return hours * 60 + minutes;
         }
 
-        function minutesToTime(minutes) {
-            const wrapped = ((minutes % (24 * 60)) + 24 * 60) % (24 * 60);
-            const hours = Math.floor(wrapped / 60);
-            const mins = Math.floor(wrapped % 60);
-            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        // Whole days from one "YYYY-MM-DD" date to another, or 0 if either is blank.
+        function daysBetween(from, to) {
+            if (!from || !to) return 0;
+            return Math.round((Date.parse(to) - Date.parse(from)) / 86400000);
         }
 
-        function formatTime(time) {
-            const [hours, minutes] = time.split(':').map(Number);
-            const ampm = hours >= 12 ? 'p' : 'a';
-            const formattedHours = hours % 12 || 12;
-            return `${formattedHours}:${String(minutes).padStart(2, '0')}${ampm}`;
+        // When an airport code is recognized, fill in the place and the UTC offset in effect
+        // at that airport on the given date and time (so daylight saving time is accounted for).
+        function applyAirport(side, fillPlace) {
+            const code = $(`${side}AirportInput`).value.trim().toUpperCase();
+            const airport = AIRPORTS[code];
+            const hint = $(`${side}AirportHint`);
+            if (!airport) {
+                hint.textContent = code.length === 3 ? 'Not found' : '';
+                return;
+            }
+            const [city, timeZone] = airport;
+            hint.textContent = timeZone.replace(/_/g, ' ');
+            if (fillPlace) $(`${side}PlaceInput`).value = `${city} (${code})`;
+
+            const date = $(`${side}DateInput`).value || localDateString(new Date());
+            const time = $(`${side}TimeInput`).value || '12:00';
+            $(`${side}OffsetInput`).value = utcOffsetHours(timeZone, date, time);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('input', updateDisplay);
-            });
+        // UTC offset in hours of a time zone at a local "YYYY-MM-DD" date and "HH:MM" time.
+        function utcOffsetHours(timeZone, date, time) {
+            const format = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' });
+            const offsetAt = ms => {
+                // The zone name looks like "GMT-04:00", or just "GMT" for zero offset.
+                const name = format.formatToParts(ms).find(part => part.type === 'timeZoneName').value;
+                const match = name.match(/([+-])(\d{2}):(\d{2})/);
+                return match ? (match[1] === '-' ? -1 : 1) * (Number(match[2]) + Number(match[3]) / 60) : 0;
+            };
+            // Treat the local time as UTC to get a first guess, then correct it by the offset found there.
+            const asUtc = Date.parse(`${date}T${time}Z`);
+            return offsetAt(asUtc - offsetAt(asUtc) * 3600000);
+        }
 
-            // Set default date to today if not provided
-            const today = new Date().toISOString().split('T')[0];
-            const departureDateInput = document.getElementById('departureDateInput');
-            const arrivalDateInput = document.getElementById('arrivalDateInput');
-            if (departureDateInput && !departureDateInput.value) {
-                departureDateInput.value = today;
-            }
-            if (arrivalDateInput && !arrivalDateInput.value) {
-                arrivalDateInput.value = today;
+        function localDateString(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = localDateString(new Date());
+            for (const id of ['departureDateInput', 'arrivalDateInput']) {
+                if (!$(id).value) $(id).value = today;
             }
 
+            for (const side of ['departure', 'arrival']) {
+                $(`${side}AirportInput`).addEventListener('input', () => applyAirport(side, true));
+                $(`${side}DateInput`).addEventListener('input', () => applyAirport(side, false));
+                $(`${side}TimeInput`).addEventListener('input', () => applyAirport(side, false));
+                applyAirport(side, true);
+            }
+
+            document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateDisplay));
+            window.addEventListener('resize', updateDisplay);
             updateDisplay();
         });
-    </script></body>
+    </script>
+</body>
 </html>

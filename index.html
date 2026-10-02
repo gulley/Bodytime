@@ -4,212 +4,527 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Body Time</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f6fa;
+            --card: #ffffff;
+            --text: #1c2333;
+            --muted: #6b7486;
+            --border: #e2e6ee;
+            --input-bg: #f8f9fc;
+            --accent: #e8643a;
+            --accent-soft: rgba(232, 100, 58, 0.14);
+            --sky-top: #dbe9fb;
+            --sky-bottom: #fdf6ee;
+            --route: #a3aec2;
+            --face: #ffffff;
+            --face-night: #26304a;
+            --rim: #c9d0dd;
+            --hand: #1c2333;
+            --hand-night: #e9edf5;
+            --tick: #b7bfcd;
+            --shadow: 0 1px 2px rgba(28, 35, 51, 0.06), 0 4px 16px rgba(28, 35, 51, 0.06);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0e131d;
+                --card: #161d2a;
+                --text: #e7eaf1;
+                --muted: #8c95a8;
+                --border: #273044;
+                --input-bg: #10161f;
+                --accent: #ff8358;
+                --accent-soft: rgba(255, 131, 88, 0.16);
+                --sky-top: #1b2a4a;
+                --sky-bottom: #161d2a;
+                --route: #56627b;
+                --face: #eef1f6;
+                --face-night: #0b1020;
+                --rim: #3a4560;
+                --hand: #1c2333;
+                --hand-night: #e9edf5;
+                --tick: #9aa3b5;
+                --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
+            }
         }
 
-        /* Inputs */
-        .container {
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            line-height: 1.4;
+        }
+        main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 40px 16px 32px;
+        }
+
+        header { margin-bottom: 24px; }
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .lede {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Trip inputs */
+        .legs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .leg { padding: 18px 20px 20px; }
+        .leg h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .leg h2::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 2px solid var(--muted);
+        }
+        .leg.arrival h2::before {
+            background: var(--muted);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .row.airport { grid-template-columns: 5.5rem minmax(0, 1fr); }
+        .row:last-child { margin-bottom: 0; }
+        .row.single { grid-template-columns: 1fr; }
+        label {
             display: flex;
             justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--muted);
         }
-        .section { width: 45%; }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input {
-            box-sizing: border-box;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .airport-code { text-transform: uppercase; }
         .hint {
-            font-size: 13px;
-            color: #666;
+            font-weight: 400;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        input:not([type="range"]):not([type="radio"]) {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text);
+            font: inherit;
+            font-size: 0.95rem;
+        }
+        input:not([type="range"]):not([type="radio"]):focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+        .airport-code {
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.06em;
         }
 
-        /* Arc and clocks */
-        .arc-container {
-            height: 200px;
+        /* Flight scene */
+        .flight {
+            overflow: hidden;
+            background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom) 75%);
+        }
+        .scene {
             position: relative;
-            margin: 20px 0 70px;
+            height: 320px;
         }
-        .arc {
+        .route {
             position: absolute;
-            width: calc(100% - 120px);
-            height: 150px;
-            border-top: 2px solid lightgray;
-            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-            bottom: 0;
-            left: 60px;
-        }
-        .clock-container { position: absolute; }
-        .clock {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid black;
-            position: relative;
-            background-color: white;
-        }
-        .hand {
-            position: absolute;
-            bottom: 50%;
-            left: 50%;
-            transform-origin: 50% 100%;
-            background-color: black;
-        }
-        .hour-hand {
-            width: 2px;
-            height: 18px;
-            margin-left: -1px;
-        }
-        .minute-hand {
-            width: 1px;
-            height: 25px;
-            margin-left: -0.5px;
-        }
-        .clock-label {
-            position: absolute;
-            text-align: center;
-            width: 100px;
-            bottom: 70px;
-            transform: translateX(-50%);
-        }
-        .digital-time {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            top: 70px;
-        }
-        .jet {
-            position: absolute;
-            z-index: 1;
-            top: -100%;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            overflow: visible;
         }
-
-        #departureTime { left: 0; bottom: 0; z-index: 5; }
-        #departureLabel { left: 30px; }
-        #arrivalTime { right: 0; bottom: 0; z-index: 5; }
-        #arrivalLabel { right: 30px; transform: translateX(50%); }
-        #transitTime { left: 50%; bottom: 100%; transform: translateX(-50%); z-index: 10; }
-        #transitLabel { left: 50%; }
+        .route path {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+        }
+        #routeBehind { stroke: var(--accent); }
+        #routeAhead {
+            stroke: var(--route);
+            stroke-dasharray: 2 7;
+        }
+        .stop {
+            position: absolute;
+            width: 128px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            z-index: 2;
+        }
+        .clock {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+        }
+        .clock svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .clock .rim { fill: var(--face); stroke: var(--rim); stroke-width: 2.5; transition: fill 0.3s; }
+        .clock.night .rim { fill: var(--face-night); }
+        .clock .tick { stroke: var(--tick); stroke-width: 1.5; stroke-linecap: round; }
+        .clock .tick.major { stroke-width: 3; }
+        .clock .hour, .clock .minute { stroke: var(--hand); stroke-linecap: round; transition: stroke 0.3s; }
+        .clock .hour { stroke-width: 5; }
+        .clock .minute { stroke-width: 3; }
+        .clock.night .hour, .clock.night .minute { stroke: var(--hand-night); }
+        .clock .pin { fill: var(--accent); }
+        .time {
+            margin-top: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .place {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        #transitTime { z-index: 3; }
+        #transitTime .rim { stroke: var(--accent); stroke-width: 4; }
+        #transitTime .time {
+            padding: 1px 10px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+        }
+        .clock .jet {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            width: 46px;
+            height: 19px;
+            margin-left: -23px;
+            fill: var(--text);
+        }
 
         /* Slider */
-        .slider-container {
-            position: relative;
-            margin: 20px 0 30px;
-        }
-        .slider-label {
-            position: absolute;
-            top: 20px;
-        }
-        .slider-label.begin { left: 0; }
-        .slider-label.end { right: 0; }
-        .slider-instruction {
-            position: absolute;
+        .controls { padding: 4px 24px 20px; }
+        input[type="range"] {
+            --fill: 0%;
             width: 100%;
-            text-align: center;
-            top: 40px;
-            font-size: 14px;
-            color: #666;
+            margin: 0;
+            height: 24px;
+            background: transparent;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
         }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--accent) var(--fill), var(--border) var(--fill));
+        }
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--accent) var(--fill), var(--border) var(--fill));
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            margin-top: -8px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid var(--accent);
+            box-shadow: var(--shadow);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid var(--accent);
+            box-shadow: var(--shadow);
+        }
+        input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        #progress {
+            color: var(--text);
+            font-weight: 500;
+            text-align: center;
+        }
+        input[type="range"]:disabled { cursor: default; }
+
+        /* Simulate / Live GPS switch */
+        .mode-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px 14px;
+            margin-top: 16px;
+        }
+        .mode-switch {
+            display: inline-flex;
+            padding: 3px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--card);
+        }
+        .mode-switch input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .mode-switch label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        .mode-switch input:checked + label {
+            background: var(--accent);
+            color: #fff;
+        }
+        .mode-switch input:focus-visible + label {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        #modeLive + label::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        #modeLive:checked + label::before { animation: pulse 1.6s ease-in-out infinite; }
+        @keyframes pulse { 50% { opacity: 0.25; } }
+        #liveStatus {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        #liveStatus:empty { display: none; }
 
         #errorMessage {
-            margin-top: 60px;
-            color: #b00020;
+            margin-top: 16px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 500;
         }
         #errorMessage:empty { display: none; }
+
+        footer {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: center;
+        }
+        footer a { color: inherit; }
+
+        @media (max-width: 640px) {
+            main {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                padding-top: 24px;
+            }
+            header, .legs, #errorMessage, footer { margin: 0; }
+            .flight { order: 1; }
+            #errorMessage { order: 2; }
+            .legs { order: 3; }
+            footer { order: 4; }
+            input:not([type="range"]):not([type="radio"]) { font-size: 16px; }
+            .mode-switch label { padding: 8px 16px; }
+            .legs { grid-template-columns: minmax(0, 1fr); }
+            .stop { width: 96px; }
+            .controls { padding: 4px 16px 16px; }
+        }
     </style>
 </head>
 <body>
-    <h1>Body Time</h1>
-    <p>What time does it feel like?</p>
+<main>
+    <header>
+        <h1>Body Time</h1>
+        <p class="lede">What time does it feel like as you fly across time zones?</p>
+    </header>
 
-    <div class="container">
-        <div class="section">
+    <div class="legs">
+        <section class="card leg departure">
             <h2>Departure</h2>
-            <label for="departureTimeInput">Time</label>
-            <input type="time" id="departureTimeInput" value="09:15" required>
-            <label for="departureDateInput">Date (optional)</label>
-            <input type="date" id="departureDateInput">
-            <label for="departureAirportInput">Airport code (optional) <span id="departureAirportHint" class="hint"></span></label>
-            <input type="text" id="departureAirportInput" class="airport-code" value="AMS" maxlength="3" placeholder="e.g. AMS">
-            <label for="departurePlaceInput">Place (optional)</label>
-            <input type="text" id="departurePlaceInput" placeholder="Place">
-            <label for="departureOffsetInput">Time Zone Offset from UTC</label>
-            <input type="number" id="departureOffsetInput" value="1" step="0.25" required>
-        </div>
-        <div class="section">
+            <div class="row airport">
+                <div>
+                    <label for="departureAirportInput">Airport</label>
+                    <input type="text" id="departureAirportInput" class="airport-code" value="AMS" maxlength="3" placeholder="AMS">
+                </div>
+                <div>
+                    <label for="departurePlaceInput">Place</label>
+                    <input type="text" id="departurePlaceInput" placeholder="City">
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="departureDateInput">Date</label>
+                    <input type="date" id="departureDateInput">
+                </div>
+                <div>
+                    <label for="departureTimeInput">Time</label>
+                    <input type="time" id="departureTimeInput" value="09:15" required>
+                </div>
+            </div>
+            <div class="row single">
+                <div>
+                    <label for="departureOffsetInput">UTC offset (hours) <span id="departureAirportHint" class="hint"></span></label>
+                    <input type="number" id="departureOffsetInput" value="1" step="0.25" required>
+                </div>
+            </div>
+        </section>
+
+        <section class="card leg arrival">
             <h2>Arrival</h2>
-            <label for="arrivalTimeInput">Time</label>
-            <input type="time" id="arrivalTimeInput" value="11:40" required>
-            <label for="arrivalDateInput">Date (optional)</label>
-            <input type="date" id="arrivalDateInput">
-            <label for="arrivalAirportInput">Airport code (optional) <span id="arrivalAirportHint" class="hint"></span></label>
-            <input type="text" id="arrivalAirportInput" class="airport-code" value="JFK" maxlength="3" placeholder="e.g. JFK">
-            <label for="arrivalPlaceInput">Place (optional)</label>
-            <input type="text" id="arrivalPlaceInput" placeholder="Place">
-            <label for="arrivalOffsetInput">Time Zone Offset from UTC</label>
-            <input type="number" id="arrivalOffsetInput" value="-5" step="0.25" required>
-        </div>
+            <div class="row airport">
+                <div>
+                    <label for="arrivalAirportInput">Airport</label>
+                    <input type="text" id="arrivalAirportInput" class="airport-code" value="JFK" maxlength="3" placeholder="JFK">
+                </div>
+                <div>
+                    <label for="arrivalPlaceInput">Place</label>
+                    <input type="text" id="arrivalPlaceInput" placeholder="City">
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="arrivalDateInput">Date</label>
+                    <input type="date" id="arrivalDateInput">
+                </div>
+                <div>
+                    <label for="arrivalTimeInput">Time</label>
+                    <input type="time" id="arrivalTimeInput" value="11:40" required>
+                </div>
+            </div>
+            <div class="row single">
+                <div>
+                    <label for="arrivalOffsetInput">UTC offset (hours) <span id="arrivalAirportHint" class="hint"></span></label>
+                    <input type="number" id="arrivalOffsetInput" value="-5" step="0.25" required>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <div class="arc-container">
-        <div class="arc"></div>
-
-        <div id="departureLabel" class="clock-label"></div>
-        <div id="departureTime" class="clock-container">
-            <div class="clock">
-                <div class="hand hour-hand"></div>
-                <div class="hand minute-hand"></div>
-            </div>
-            <div class="digital-time"></div>
-        </div>
-
-        <div id="transitLabel" class="clock-label">In Transit</div>
-        <div id="transitTime" class="clock-container">
-            <svg class="jet" viewBox="0 0 564 227" xmlns="http://www.w3.org/2000/svg">
-                <polyline fill="black" points="330,196 306,192 284,186 255,186 225,186 196,185 168,183 143,179 118,175 95,168 71,162 50,154 29,144 25,128 32,114 30,96 23,73 15,51 11,30 34,28 50,43 61,61 74,78 89,93 106,105 131,109 159,107 188,106 216,105 245,104 275,104 305,104 334,104 364,104 394,104 423,105 450,107 477,110 501,115 523,123 540,135 552,153 541,169 517,175 491,179 464,181 436,183 408,184 378,184 351,187" stroke="none" />
+    <section class="card flight">
+        <div class="scene" id="scene">
+            <svg class="route" aria-hidden="true">
+                <path id="routeAhead"></path>
+                <path id="routeBehind"></path>
             </svg>
-            <div class="clock">
-                <div class="hand hour-hand"></div>
-                <div class="hand minute-hand"></div>
+
+            <div id="departureTime" class="stop">
+                <div class="clock"></div>
+                <div class="time"></div>
+                <div id="departureLabel" class="place"></div>
             </div>
-            <div class="digital-time"></div>
+
+            <div id="arrivalTime" class="stop">
+                <div class="clock"></div>
+                <div class="time"></div>
+                <div id="arrivalLabel" class="place"></div>
+            </div>
+
+            <div id="transitTime" class="stop">
+                <div class="clock">
+                    <svg class="jet" viewBox="0 0 564 227" aria-hidden="true">
+                        <polyline points="330,196 306,192 284,186 255,186 225,186 196,185 168,183 143,179 118,175 95,168 71,162 50,154 29,144 25,128 32,114 30,96 23,73 15,51 11,30 34,28 50,43 61,61 74,78 89,93 106,105 131,109 159,107 188,106 216,105 245,104 275,104 305,104 334,104 364,104 394,104 423,105 450,107 477,110 501,115 523,123 540,135 552,153 541,169 517,175 491,179 464,181 436,183 408,184 378,184 351,187" />
+                    </svg>
+                </div>
+                <div class="time" title="In transit"></div>
+            </div>
         </div>
 
-        <div id="arrivalLabel" class="clock-label"></div>
-        <div id="arrivalTime" class="clock-container">
-            <div class="clock">
-                <div class="hand hour-hand"></div>
-                <div class="hand minute-hand"></div>
+        <div class="controls">
+            <input type="range" id="slider" min="0" max="100" step="any" value="0" aria-label="How far along the flight">
+            <div class="slider-labels">
+                <span>Takeoff</span>
+                <span id="progress"></span>
+                <span>Landing</span>
             </div>
-            <div class="digital-time"></div>
+            <div class="mode-row">
+                <div class="mode-switch" role="radiogroup" aria-label="Slider mode">
+                    <input type="radio" name="mode" id="modeSimulate" value="simulate" checked>
+                    <label for="modeSimulate">Simulate</label>
+                    <input type="radio" name="mode" id="modeLive" value="live">
+                    <label for="modeLive">Live GPS</label>
+                </div>
+                <span id="liveStatus" role="status"></span>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="slider-container">
-        <input type="range" id="slider" min="0" max="100" value="0">
-        <div class="slider-label begin">Begin</div>
-        <div class="slider-label end">End</div>
-        <div class="slider-instruction">Move this slider to fly the airplane</div>
-    </div>
+    <div id="errorMessage" role="alert"></div>
 
-    <div id="errorMessage"></div>
+    <footer>
+        Read more: <a href="https://starchamber.com/2024/09/10/body-time-talking-to-the-time-minder/">Body Time – Talking to the Time Minder</a>
+    </footer>
+</main>
 
     <script src="airports.js"></script>
     <script>
         const MINUTES_PER_DAY = 24 * 60;
+        const CLOCK_RADIUS = 32;
         const $ = id => document.getElementById(id);
 
         function updateDisplay() {
@@ -221,6 +536,8 @@
 
             $('departureLabel').textContent = $('departurePlaceInput').value;
             $('arrivalLabel').textContent = $('arrivalPlaceInput').value;
+            $('slider').style.setProperty('--fill', `${fraction * 100}%`);
+            positionClocks(fraction);
 
             if (!depTime || !arrTime || isNaN(depOffset) || isNaN(arrOffset)) {
                 $('errorMessage').textContent = 'Please fill in all required fields with valid values.';
@@ -250,20 +567,59 @@
             setClock('transitTime', departureClock + fraction * timeZoneDiff);
             setClock('arrivalTime', departureClock + timeZoneDiff);
 
-            positionTransitClock(fraction);
+            $('progress').textContent =
+                fraction === 0 ? (!isLive() ? 'Drag to fly the plane' : lastPosition ? 'At the departure airport' : 'Waiting for your location') :
+                fraction === 1 ? `Landed after ${formatDuration(tripDuration)}` :
+                `${formatDuration(fraction * tripDuration)} into a ${formatDuration(tripDuration)} flight`;
         }
 
-        // Move the transit clock along the arc between the departure and arrival clocks.
-        function positionTransitClock(fraction) {
-            const dep = $('departureTime');
-            const arr = $('arrivalTime');
-            const start = dep.offsetLeft + dep.offsetWidth / 2;
-            const end = arr.offsetLeft + arr.offsetWidth / 2;
-            const arcHeight = document.querySelector('.arc').offsetHeight;
+        // Lay out the route arc to fit the scene, then place the end clocks and the transit clock on it.
+        function positionClocks(fraction) {
+            const scene = $('scene');
+            const width = scene.clientWidth;
+            const margin = width < 500 ? 52 : 72;
+            const x0 = margin;
+            const x1 = width - margin;
+            const arcHeight = Math.min(140, (x1 - x0) * 0.32);
+            const baseY = 80 + arcHeight;
+            scene.style.height = `${baseY + CLOCK_RADIUS + (width < 500 ? 84 : 64)}px`;
 
-            const transit = $('transitTime');
-            transit.style.left = `${start + fraction * (end - start)}px`;
-            transit.style.bottom = `${Math.sin(fraction * Math.PI) * arcHeight}px`;
+            // Climb during the first third, cruise level through the middle third, descend in the last.
+            // Each climb and descent is an S-curve, so the plane is level on the runway and at cruise.
+            const altitudeAt = f => arcHeight * smoothstep(3 * f) * smoothstep(3 * (1 - f));
+            const pointAt = f => [x0 + f * (x1 - x0), baseY - altitudeAt(f)];
+            const pathBetween = (from, to) => {
+                const steps = Math.max(1, Math.round((to - from) * 60));
+                const points = [];
+                for (let i = 0; i <= steps; i++) {
+                    points.push(pointAt(from + (to - from) * i / steps).map(n => n.toFixed(1)).join(' '));
+                }
+                return 'M' + points.join(' L');
+            };
+            $('routeBehind').setAttribute('d', fraction > 0 ? pathBetween(0, fraction) : '');
+            $('routeAhead').setAttribute('d', fraction < 1 ? pathBetween(fraction, 1) : '');
+
+            placeStop('departureTime', pointAt(0));
+            placeStop('arrivalTime', pointAt(1));
+            placeStop('transitTime', pointAt(fraction));
+
+            // Tilt the jet to follow the slope of the route.
+            const step = 0.001;
+            const climbRate = (altitudeAt(fraction + step) - altitudeAt(fraction - step)) / (2 * step);
+            document.querySelector('.jet').style.transform = `rotate(${Math.atan(-climbRate / (x1 - x0))}rad)`;
+        }
+
+        // Smooth 0-to-1 ramp for t from 0 to 1, clamped outside that range.
+        function smoothstep(t) {
+            t = Math.min(1, Math.max(0, t));
+            return t * t * (3 - 2 * t);
+        }
+
+        // Center a stop's clock on the point [x, y].
+        function placeStop(id, [x, y]) {
+            const stop = $(id);
+            stop.style.left = `${x}px`;
+            stop.style.top = `${y - CLOCK_RADIUS}px`;
         }
 
         function setClock(id, totalMinutes) {
@@ -271,13 +627,36 @@
             const hours = Math.floor(minutesOfDay / 60);
             const minutes = minutesOfDay % 60;
 
-            const clock = $(id);
-            clock.querySelector('.hour-hand').style.transform = `rotate(${(hours % 12 + minutes / 60) * 30}deg)`;
-            clock.querySelector('.minute-hand').style.transform = `rotate(${minutes * 6}deg)`;
+            const stop = $(id);
+            const clock = stop.querySelector('.clock');
+            clock.querySelector('.hour').setAttribute('transform', `rotate(${(hours % 12 + minutes / 60) * 30})`);
+            clock.querySelector('.minute').setAttribute('transform', `rotate(${minutes * 6})`);
+            clock.classList.toggle('night', hours < 6 || hours >= 19);
 
-            const ampm = hours >= 12 ? 'p' : 'a';
-            clock.querySelector('.digital-time').textContent =
-                `${hours % 12 || 12}:${String(minutes).padStart(2, '0')}${ampm}`;
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            stop.querySelector('.time').textContent =
+                `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${ampm}`;
+        }
+
+        function clockFaceSvg() {
+            let ticks = '';
+            for (let i = 0; i < 12; i++) {
+                const major = i % 3 === 0;
+                ticks += `<line class="tick${major ? ' major' : ''}" x1="0" y1="${major ? -35 : -38}" x2="0" y2="-42" transform="rotate(${i * 30})"/>`;
+            }
+            return `<svg viewBox="-50 -50 100 100" aria-hidden="true">
+                <circle class="rim" r="47"/>${ticks}
+                <line class="hour" x1="0" y1="5" x2="0" y2="-22"/>
+                <line class="minute" x1="0" y1="7" x2="0" y2="-33"/>
+                <circle class="pin" r="3.5"/>
+            </svg>`;
+        }
+
+        function formatDuration(totalMinutes) {
+            const rounded = Math.round(totalMinutes);
+            const hours = Math.floor(rounded / 60);
+            const minutes = rounded % 60;
+            return hours ? `${hours}h ${String(minutes).padStart(2, '0')}m` : `${minutes}m`;
         }
 
         function timeToMinutes(time) {
@@ -298,7 +677,7 @@
             const airport = AIRPORTS[code];
             const hint = $(`${side}AirportHint`);
             if (!airport) {
-                hint.textContent = code.length === 3 ? 'Not found' : '';
+                hint.textContent = code.length === 3 ? 'Airport not found' : '';
                 return;
             }
             const [city, timeZone] = airport;
@@ -324,27 +703,124 @@
             return offsetAt(asUtc - offsetAt(asUtc) * 3600000);
         }
 
+        // Live GPS mode: move the slider to match how far we are between the two airports.
+        let watchId = null;
+        let lastPosition = null;
+
+        function isLive() {
+            return $('modeLive').checked;
+        }
+
+        function setMode() {
+            const live = isLive();
+            $('slider').disabled = live;
+            if (live && !navigator.geolocation) {
+                $('liveStatus').textContent = 'This browser can’t provide your location.';
+            } else if (live && watchId === null) {
+                $('liveStatus').textContent = 'Waiting for a GPS fix… (a window seat helps)';
+                watchId = navigator.geolocation.watchPosition(
+                    position => { lastPosition = position; applyLivePosition(); updateDisplay(); },
+                    showLocationError,
+                    { enableHighAccuracy: true, maximumAge: 15000, timeout: 120000 });
+            } else if (!live && watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                lastPosition = null;
+                $('liveStatus').textContent = '';
+            }
+            updateDisplay();
+        }
+
+        // Fraction of the trip flown = distance flown / (distance flown + distance to go).
+        // This stays sensible even when the actual route curves away from the great circle.
+        function applyLivePosition() {
+            if (!isLive() || !lastPosition) return;
+            const from = AIRPORTS[$('departureAirportInput').value.trim().toUpperCase()];
+            const to = AIRPORTS[$('arrivalAirportInput').value.trim().toUpperCase()];
+            if (!from || !to) {
+                $('liveStatus').textContent = 'Enter both airport codes to track your flight.';
+                return;
+            }
+            const here = [lastPosition.coords.latitude, lastPosition.coords.longitude];
+            const flown = distanceKm(from.slice(2), here);
+            const toGo = distanceKm(here, to.slice(2));
+            $('slider').value = flown + toGo > 0 ? 100 * flown / (flown + toGo) : 0;
+            $('liveStatus').textContent = `${formatDistance(flown)} flown · ${formatDistance(toGo)} to go`;
+        }
+
+        function showLocationError(error) {
+            $('liveStatus').textContent =
+                error.code === error.PERMISSION_DENIED ? 'Location access is blocked for this page.' :
+                'Still looking for a GPS fix… (a window seat helps)';
+        }
+
+        // Great-circle distance between two [latitude, longitude] points.
+        function distanceKm([lat1, lon1], [lat2, lon2]) {
+            const rad = Math.PI / 180;
+            const a = Math.sin((lat2 - lat1) * rad / 2) ** 2 +
+                Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin((lon2 - lon1) * rad / 2) ** 2;
+            return 2 * 6371 * Math.asin(Math.sqrt(a));
+        }
+
+        function formatDistance(km) {
+            const miles = navigator.language === 'en-US';
+            const value = Math.round(miles ? km / 1.609344 : km);
+            return `${value.toLocaleString()} ${miles ? 'mi' : 'km'}`;
+        }
+
+        // Remember the trip between visits, so a reload in flight keeps everything.
+        const SAVED_FIELDS = ['Airport', 'Place', 'Date', 'Time', 'Offset']
+            .flatMap(field => ['departure', 'arrival'].map(side => `${side}${field}Input`));
+
+        function saveInputs() {
+            try {
+                const saved = Object.fromEntries(SAVED_FIELDS.map(id => [id, $(id).value]));
+                saved.mode = isLive() ? 'live' : 'simulate';
+                localStorage.setItem('bodytime', JSON.stringify(saved));
+            } catch { /* storage unavailable: nothing to remember */ }
+        }
+
+        function restoreInputs() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('bodytime')) || {};
+                for (const id of SAVED_FIELDS) {
+                    if (typeof saved[id] === 'string') $(id).value = saved[id];
+                }
+                $('modeLive').checked = saved.mode === 'live';
+                $('modeSimulate').checked = saved.mode !== 'live';
+            } catch { /* storage unavailable: keep the defaults */ }
+        }
+
         function localDateString(date) {
             const pad = n => String(n).padStart(2, '0');
             return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.clock').forEach(clock => clock.insertAdjacentHTML('afterbegin', clockFaceSvg()));
+            restoreInputs();
+
             const today = localDateString(new Date());
             for (const id of ['departureDateInput', 'arrivalDateInput']) {
                 if (!$(id).value) $(id).value = today;
             }
 
             for (const side of ['departure', 'arrival']) {
-                $(`${side}AirportInput`).addEventListener('input', () => applyAirport(side, true));
+                $(`${side}AirportInput`).addEventListener('input', () => { applyAirport(side, true); applyLivePosition(); });
                 $(`${side}DateInput`).addEventListener('input', () => applyAirport(side, false));
                 $(`${side}TimeInput`).addEventListener('input', () => applyAirport(side, false));
-                applyAirport(side, true);
+                applyAirport(side, !$(`${side}PlaceInput`).value);
             }
 
             document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateDisplay));
+            document.querySelectorAll('input[name="mode"]').forEach(radio => radio.addEventListener('change', setMode));
+            document.querySelectorAll('input').forEach(input => input.addEventListener('change', saveInputs));
             window.addEventListener('resize', updateDisplay);
-            updateDisplay();
+            setMode();
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => { /* e.g. opened from a file */ });
+            }
         });
     </script>
 </body>
